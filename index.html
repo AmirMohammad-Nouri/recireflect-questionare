@@ -175,6 +175,33 @@ main { max-width: 980px; margin: 0 auto; padding-block: 28px 120px; padding-left
 textarea { width: 100%; min-height: 70px; border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; background: var(--surface); resize: vertical }
 @media (max-width: 520px) { .likert label { min-height: 72px; font-size: 11px } }
 /* part 2 */
+.vgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: stretch }
+@media (max-width: 860px) { .vgrid { grid-template-columns: minmax(0, 1fr) } }
+.vcard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0 }
+.vhead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px }
+.vhead h3 { font-size: 19px }
+.strip { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 3px }
+.strip-days { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: -8px }
+.cell { position: relative; display: inline-grid; place-items: center; height: 22px; min-width: 14px; border-radius: 4px; background: var(--sunken); border: 1px solid var(--line) }
+.legend .cell { width: 22px }
+.cell.bad { background: var(--wrong); border-color: var(--wrong-line) }
+.cell.fix { box-shadow: inset 0 -4px 0 var(--accent) }
+.cell .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--fg); color: var(--bg); font-size: 9px; font-weight: 700; font-style: normal; display: grid; place-items: center }
+.vsec { display: flex; flex-direction: column; gap: 6px; font-size: 14px }
+.vk { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent) }
+.out { border-top: 1px solid var(--line); padding-top: 10px; margin-top: auto }
+.orow { display: flex; flex-direction: column; gap: 1px; font-size: 13px }
+.orow > span { color: var(--muted) }
+.orow b { font-weight: 600 }
+.orow small { display: block; font-weight: 400; color: var(--muted); font-size: 12.5px }
+.ok, .no { display: inline-block; border-radius: 5px; padding: 0 7px; margin-right: 4px; font-size: 12.5px; font-weight: 700 }
+.ok { background: var(--accent-soft); color: var(--accent) }
+.no { background: var(--wrong); color: var(--warn) }
+.msgs summary { cursor: pointer; color: var(--accent); font-size: 13px; font-weight: 500 }
+.msgs ol { margin: 8px 0 0; padding-left: 18px; font-size: 12.5px; display: flex; flex-direction: column; gap: 5px; max-height: 260px; overflow: auto }
+.ctx { display: flex; flex-direction: column; gap: 6px; font-size: 15px }
+.ctx-bio { font-weight: 600 }
+
 .person { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px }
 @media (max-width: 760px) { .person { grid-template-columns: minmax(0, 1fr) } }
 .wish { display: flex; flex-direction: column; gap: 6px; font-size: 13px }
@@ -429,7 +456,7 @@ function scrIntro() {
   return `<div class="prose"><span class="eyebrow">Study questionnaire</span><h1>How should a food recommender explain itself?</h1>
     <p class="lead">ReciReflect suggests recipes, shows why, and has an AI supervisor that speaks up when a person's choices drift away from the goal they set. We want your opinion on its features, and on how often the supervisor should speak up.</p></div>
     <div class="facts"><div class="fact"><b>Part 1 · 10 features</b><span>Each one shown with and without the feature, side by side. You say how much it helps people find out more.</span></div>
-    <div class="fact"><b>Part 2 · 10 cases</b><span>A fictional person's 10 days with three versions of the supervisor. You pick the one you prefer.</span></div>
+    <div class="fact"><b>Part 2 · 10 cases</b><span>One fictional person's 10 days, handled by three versions of the supervisor. You pick the one that did best.</span></div>
     <div class="fact"><b>About 25 minutes</b><span>You can go back at any time. Your answers stay in this browser until you finish.</span></div></div>
     <div class="panel pad prose"><h3>Anonymous</h3><p>We do not ask for your name, email, age or any other detail about you, and nothing is sent anywhere. At the end you save your answers as a file and send that file yourself to the person who gave you this link.</p>
     <p class="meta">The file holds only your answers and a random code that is not linked to you.</p></div>`;
@@ -462,56 +489,100 @@ function scrP1End() {
     <label class="q" for="p1c"><span class="q-t">Comments on part 1 (optional)</span><textarea id="p1c" data-text="p1c" maxlength="2000">${esc(S.p1c)}</textarea></label>`;
 }
 function scrP2Intro() {
-  const sample = { day: 4, wrong: true, saved: { h: 40, s: 30, t: 30 } };
-  return `<div class="prose"><span class="eyebrow">Part 2 of 2</span><h2>How often should the supervisor speak up?</h2>
-    <p>The supervisor compares a person's saved goal with what their choices show. If it speaks up too rarely, the app keeps a goal that no longer fits. If it speaks up too often, it interrupts for nothing.</p>
-    <p>Each case follows one fictional person for 10 days of meals (breakfast, lunch and dinner). The same person lives the same days three times, each time with a different version of the supervisor: <b>A</b>, <b>B</b> and <b>C</b>. Pick the version you would prefer if you were this person.</p>
-    <p class="meta">The people are made up. Their choices and answers were simulated by an AI model playing each person, in a test of ReciReflect.</p></div>
-    <div class="panel pad" style="display:flex;flex-direction:column;gap:12px"><h3>How to read a case</h3>
-      <div class="legend"><span><span class="sw" style="background:var(--wrong);border:1px solid var(--wrong-line)"></span>Day where the app's saved goal no longer fits what the person really wants</span>
-      <span><span class="mk" style="display:inline-grid">?</span>A question</span><span><span class="mk prop" style="display:inline-grid">!</span>A goal change proposal</span>
-      <span><span class="upd">new goal</span>The person accepted a new goal</span></div>
-      <div class="legend"><span>The thin bar in each day is the saved goal:</span><span><span class="sw" style="background:var(--h)"></span>Healthiness</span><span><span class="sw" style="background:var(--s)"></span>Sustainability</span><span><span class="sw" style="background:var(--t)"></span>Convenience</span></div>
-      <p class="meta">Click a <b>?</b> or <b>!</b> to read what the supervisor said and how the person answered.</p></div>`;
+  return `<div class="prose"><span class="eyebrow">Part 2 of 2</span><h2>When should the supervisor speak up?</h2>
+    <p>The supervisor watches whether a person's choices still fit the goal they saved. It can speak up <b>early</b> (it notices changes fast, but may interrupt for nothing), or <b>late</b> (it interrupts less, but may miss a real change).</p>
+    <p>In each case you meet one fictional person and their 10 days of meals. The same 10 days are shown three times, with three versions of the supervisor: <b>A</b>, <b>B</b> and <b>C</b>. Each version speaks up at a different point. Read the three short summaries and pick the version you think handled it best.</p>
+    <p class="meta">The people are made up. Their choices, answers and feelings were simulated by an AI model playing each person, in a test of ReciReflect.</p></div>
+    <div class="panel pad" style="display:flex;flex-direction:column;gap:10px"><h3>In each version you will see</h3>
+      <div class="legend"><span><span class="cell"></span>a day of meals</span><span><span class="cell bad"></span>a day when the app's goal no longer fits the person</span>
+      <span><span class="cell"><i class="dot"></i></span>the supervisor spoke up</span><span><span class="cell fix"></span>the person accepted a change to the goal</span></div>
+      <p class="meta">Below the strip: what happened, in two or three lines, and the outcome.</p></div>`;
 }
 const same = (a, b) => a && b && ["h", "s", "t"].every((k) => a[k] === b[k]);
+const pctTxt = (w) => `healthiness ${w.h}%, sustainability ${w.s}%, convenience ${w.t}%`;
+const far = (a, b) => ["h", "s", "t"].some((k) => Math.abs(a[k] - b[k]) >= 10);
+function gist(e) {
+  let m = /When (\w+) and (\w+) pull/.exec(e.title);
+  if (m) return `asked whether ${m[1]} or ${m[2]} usually wins`;
+  m = /Give (\w+) (more|less) weight/.exec(e.title);
+  if (m) return `suggested giving ${m[1]} ${m[2]} weight in the goal`;
+  return e.title;
+}
+function said(e, name) {
+  const a = e.answer || "";
+  if (a === "Update my goal") return `${name} accepted, and the goal was changed`;
+  if (a === "Keep my goal") return `${name} kept the goal`;
+  if (a === "Only today") return `${name} said: only for today`;
+  const m = /(\w+) usually wins/.exec(a); if (m) return `${name} said ${m[1].toLowerCase()} usually wins`;
+  return `${name} did not answer`;
+}
+function context(it) {
+  const st = it.story, real0 = st[0].goal, realN = st[9].goal, n = it.name;
+  const note = (d) => st[d - 1].notes.map((x) => x.replace(/[.\s]+$/, "")).join(". ");
+  const days = st.filter((d) => d.notes.length).map((d) => d.day);
+  let what;
+  if (it.scenario === "stable") what = `Nothing changes in these 10 days.`;
+  else if (it.scenario === "feedback_mistakes") what = `On days ${days.join(" and ")}, ${n} clicks the wrong reactions for one meal by mistake. ${n}'s wishes do not change.`;
+  else if (it.scenario === "temporary_circumstance") what = `Days ${days[0]} to ${days[days.length - 1] - 1}: ${note(days[0]).replace("For a few days: ", "")}. After that, back to normal; ${n}'s lasting wishes never change.`;
+  else if (it.scenario === "incorrect_onboarding") what = `At sign-up, ${n} entered the priorities wrongly, so the app starts with the wrong goal.`;
+  else if (it.scenario === "abrupt_change") what = `Day ${days[0]}: ${note(days[0])}. From then on, ${n} really wants ${pctTxt(realN)}.`;
+  else what = `From day 3 to day 8, ${n}'s wishes shift step by step: ${note(days[0]).replace("The goal starts to change: ", "")}. By day 10, ${n} really wants ${pctTxt(realN)}.`;
+  const told = far(it.entered, real0) ? `Told the app ${pctTxt(it.entered)}, but really wants ${pctTxt(real0)}.` : `Told the app: ${pctTxt(it.entered)}.`;
+  return { told, what };
+}
+function versionSummary(it, thr) {
+  const tl = it.options[thr], n = it.name;
+  let wrongBefore = far(it.entered, it.story[0].goal), fixedDay = null, everWrong = wrongBefore, needless = 0;
+  const all = [], cells = [];
+  tl.forEach((d, i) => {
+    const prev = i ? tl[i - 1].saved : it.entered, changed = !same(prev, d.saved);
+    if (!wrongBefore && !d.wrong) needless += d.events.length;
+    if (d.wrong) everWrong = true;
+    if (everWrong && !d.wrong && fixedDay == null && (wrongBefore || i === 0)) fixedDay = d.day;
+    if (d.wrong) fixedDay = null;
+    d.events.forEach((e) => all.push({ ...e, day: d.day }));
+    cells.push(`<span class="cell ${d.wrong ? "bad" : ""} ${changed ? "fix" : ""}" title="Day ${d.day}">${d.events.length ? `<i class="dot">${d.events.length > 1 ? d.events.length : ""}</i>` : ""}</span>`);
+    wrongBefore = d.wrong;
+  });
+  const lines = [];
+  if (!all.length) lines.push(`Stayed silent for all 10 days.`);
+  else {
+    const first = all[0]; lines.push(`<b>Day ${first.day}:</b> ${gist(first)}. ${said(first, n)}.`);
+    const key = all.slice(1).find((e) => e.answer === "Update my goal") || all.slice(1).find((e) => e.kind === "proposal");
+    let shown = 1;
+    if (key) { lines.push(`<b>Day ${key.day}:</b> ${gist(key)}. ${said(key, n)}.`); shown = 2; }
+    const rest = all.filter((e, i) => i > 0 && e !== key);
+    if (rest.length) { const ds = [...new Set(rest.map((e) => e.day))]; lines.push(`Then spoke up ${rest.length} more time${rest.length > 1 ? "s" : ""} (day${ds.length > 1 ? "s" : ""} ${ds.join(", ")}).`); }
+  }
+  const felt = { helpful: 0, neutral: 0, annoying: 0 }; all.forEach((e) => { if (felt[e.felt] != null) felt[e.felt]++; });
+  const endOk = !tl[9].wrong, needed = everWrong;
+  return { cells: cells.join(""), lines, count: all.length, needless, endOk, needed, fixedDay, felt, all };
+}
 function scrCase(it, idx) {
-  const order = orderFor(it.id); const a = S.p2[it.id] || {}; const st = ui(it.id); const sel = st.sel;
-  const first = it.story[0].goal; const last = it.story[9].goal; const changes = !same(first, last);
-  const notes = it.story.filter((d) => d.notes.length);
-  const realRow = `<div class="tl-row"><div class="tl-lab">What happens<small>the person's real wishes</small></div><div class="days">${it.story.map((d) => `<div class="day real"><span class="dn">Day ${d.day}</span>
-      <div class="mini">${["h", "s", "t"].map((k) => `<i style="background:${C[k]};flex:${d.goal[k]}"></i>`).join("")}</div>
-      ${d.notes.length ? `<button class="dot" type="button" data-sel="story:${d.day}" aria-label="Day ${d.day}: what happens">i</button>` : ""}</div>`).join("")}</div></div>`;
-  const rows = order.map((thr, oi) => {
-    const L = "ABC"[oi]; const tl = it.options[thr]; let nq = 0, np = 0, upd = null;
-    const cells = tl.map((d, di) => {
-      const prev = di ? tl[di - 1].saved : it.entered; const changed = !same(prev, d.saved); if (changed && upd == null) upd = d.day;
-      const marks = d.events.map((e, ei) => { e.kind === "question" ? nq++ : np++; const key = `${L}:${di}:${ei}`;
-        return `<button type="button" class="mk ${e.kind === "proposal" ? "prop" : ""}" data-sel="${key}" aria-pressed="${sel === key}" aria-label="Version ${L}, day ${d.day}: ${e.kind}">${e.kind === "proposal" ? "!" : "?"}</button>`; }).join("");
-      return `<div class="day ${d.wrong ? "wrong" : ""}"><span class="dn">${d.day}</span><div class="mini">${["h", "s", "t"].map((k) => `<i style="background:${C[k]};flex:${d.saved[k]}"></i>`).join("")}</div>
-        <div class="marks">${marks}</div>${changed ? `<span class="upd">new goal</span>` : ""}</div>`; }).join("");
-    const n = nq + np;
-    return `<div class="tl-row"><div class="tl-lab">Version ${L}<small>${n === 0 ? "Never spoke up" : `Spoke up ${n} time${n > 1 ? "s" : ""}`}${n ? ` (${nq} question${nq === 1 ? "" : "s"}, ${np} proposal${np === 1 ? "" : "s"})` : ""}</small><small>${upd ? `Goal updated on day ${upd}` : "Goal never updated"}</small></div><div class="days">${cells}</div></div>`;
+  const order = orderFor(it.id); const a = S.p2[it.id] || {}; const n = it.name; const ctx = context(it);
+  const cards = order.map((thr, oi) => {
+    const L = "ABC"[oi], v = versionSummary(it, thr);
+    const goalRow = v.endOk
+      ? `<span class="ok">Yes</span>${v.needed ? (v.fixedDay ? ` corrected on day ${v.fixedDay}` : "") : " (it never needed changing)"}`
+      : `<span class="no">No</span> the app still uses a goal that does not fit ${esc(n)}`;
+    return `<article class="vcard"><header class="vhead"><h3>Version ${L}</h3><span class="meta">${v.count ? `spoke up ${v.count} time${v.count > 1 ? "s" : ""}` : "stayed silent"}</span></header>
+      <div class="strip" aria-label="10 days">${v.cells}</div><div class="strip-days"><span>Day 1</span><span>Day 10</span></div>
+      <div class="vsec"><span class="vk">What happened</span>${v.lines.map((x) => `<p>${x}</p>`).join("")}</div>
+      <div class="vsec out"><span class="vk">Outcome</span>
+        <div class="orow"><span>Times it spoke up</span><b>${v.count}${v.count ? `<small>${v.needless ? `${v.needless} when nothing needed fixing` : "all when something needed fixing"}</small>` : ""}</b></div>
+        <div class="orow"><span>Goal fits ${esc(n)} at the end?</span><b>${goalRow}</b></div>
+        <div class="orow"><span>How ${esc(n)} felt about it</span><b>${v.count ? `${v.felt.helpful} helpful · ${v.felt.neutral} neutral · ${v.felt.annoying} annoying` : "not interrupted"}</b></div></div>
+      ${v.count ? `<details class="msgs"><summary>Read every message (${v.count})</summary><ol>${v.all.map((e) => `<li><b>Day ${e.day}, ${esc(e.meal)}:</b> “${esc(e.title)}” <span class="meta">${esc(said(e, n))}${e.why ? ` · “${esc(e.why)}”` : ""}</span></li>`).join("")}</ol></details>` : ""}
+    </article>`;
   }).join("");
-  let detail = `<span class="meta">Click a <b>?</b>, <b>!</b> or <b>i</b> above to read it here.</span>`;
-  if (sel && sel.startsWith("story:")) { const d = it.story[+sel.split(":")[1] - 1]; detail = `<span class="who">Day ${d.day} · what happens</span>${d.notes.map((x) => `<p>${esc(x)}</p>`).join("")}`; }
-  else if (sel) { const [L, di, ei] = sel.split(":"); const thr = order["ABC".indexOf(L)]; const day = it.options[thr][+di]; const e = day.events[+ei];
-    if (e) detail = `<span class="who">Version ${L} · day ${day.day}, ${esc(e.meal)} · ${e.kind === "proposal" ? "goal change proposal" : "question"}</span>
-      <b>${esc(e.title)}</b><p>${esc(e.text)}</p>
-      ${e.proposed ? `<div class="wish"><div class="wish-row"><span class="meta">Saved goal</span>${wbar(e.saved)}</div><div class="wish-row"><span class="meta">Proposed</span>${wbar(e.proposed)}</div></div>` : ""}
-      <div class="opts">${(e.options || []).map((o) => `<button type="button" disabled aria-pressed="${o === e.answer}">${esc(o)}</button>`).join("")}</div>
-      <div class="answer"><b>${esc(it.name)} answered:</b> ${esc(e.answer || "no answer")}${e.why ? ` · “${esc(e.why)}”` : ""}${e.felt ? `<div class="meta" style="margin-top:3px">${esc(it.name)} ${FELT[e.felt] || e.felt}.</div>` : ""}</div>`; }
-  return `<div class="prose"><span class="eyebrow">Part 2 · Case ${idx + 1} of 10 · ${esc(SCN[it.scenario])}</span><h2>${esc(it.name)}</h2></div>
-    <div class="task"><span class="task-k">The question</span><span class="task-q">Which version of the supervisor, A, B or C, would you prefer if you were ${esc(it.name)}?</span>
-      <span class="task-how">Read about ${esc(it.name)} and the 10 days below. Click the <b>?</b> and <b>!</b> marks to see what each version said, then choose at the bottom of the page.</span></div>
-    <section class="person"><div class="panel pad prose"><p>${esc(it.bio)}</p><p class="meta">${esc(it.scenario_text)}</p>
-      ${notes.length ? `<ul class="story">${notes.map((d) => `<li><b>Day ${d.day}:</b> ${d.notes.map(esc).join(" ")}</li>`).join("")}</ul>` : ""}</div>
-      <div class="panel pad wish"><b>Goal</b><div class="wish-row"><span class="meta">Told the app</span>${wbar(it.entered)}</div>
-      <div class="wish-row"><span class="meta">${changes ? "Really wants, day 1" : "Really wants"}</span>${wbar(first)}</div>${changes ? `<div class="wish-row"><span class="meta">Really wants, day 10</span>${wbar(last)}</div>` : ""}
-      <div class="legend" style="font-size:11.5px"><span><span class="sw" style="background:var(--h)"></span>Healthiness</span><span><span class="sw" style="background:var(--s)"></span>Sustainability</span><span><span class="sw" style="background:var(--t)"></span>Convenience</span></div></div></section>
-    <section class="panel pad tl">${realRow}${rows}<div class="detail" id="detail">${detail}</div></section>
+  return `<div class="prose"><span class="eyebrow">Part 2 · Case ${idx + 1} of 10 · ${esc(SCN[it.scenario])}</span><h2>${esc(n)}</h2></div>
+    <div class="task"><span class="task-k">The question</span><span class="task-q">Which version of the supervisor, A, B or C, handled ${esc(n)}'s 10 days best?</span>
+      <span class="task-how">Read who ${esc(n)} is, then compare the three versions below. They differ only in when the supervisor speaks up.</span></div>
+    <section class="panel pad ctx"><p class="ctx-bio">${esc(it.bio)}</p><p>${esc(ctx.told)}</p><p><b>What happens:</b> ${esc(ctx.what)}</p></section>
+    <div class="legend"><span><span class="cell bad"></span>goal no longer fits</span><span><span class="cell"><i class="dot"></i></span>spoke up (number = how many times that day)</span><span><span class="cell fix"></span>goal changed (person accepted)</span></div>
+    <section class="vgrid">${cards}</section>
     <section class="panel pad" style="display:flex;flex-direction:column;gap:14px"><div class="answers-h"><h3>Your answer</h3></div>
-      <div class="q"><div class="q-t"><span class="qn">Q1</span><span>Which version of the supervisor would you prefer for ${esc(it.name)}?</span><span class="req">required</span></div>
+      <div class="q"><div class="q-t"><span class="qn">Q1</span><span>Which version handled ${esc(n)}'s 10 days best?</span><span class="req">required</span></div>
       <div class="choice" role="radiogroup">${"ABC".split("").map((L) => `<label><input type="radio" name="choice" value="${L}" ${a.choice === L ? "checked" : ""}><b style="font-family:var(--display);font-size:17px">Version ${L}</b></label>`).join("")}</div></div>
       <label class="q" for="why-${it.id}"><span class="q-t"><span class="qn">Q2</span><span>Why? (optional)</span></span><textarea id="why-${it.id}" data-reason="${it.id}" maxlength="1000">${esc(a.reason || "")}</textarea></label></section>`;
 }
@@ -573,7 +644,7 @@ main.addEventListener("click", (ev) => {
   else if (t.dataset.opt) { ui(id).opt = t.dataset.opt; render(true); }
   else if (t.dataset.pick) { ui(id).pick = +t.dataset.pick; render(true); }
   else if (t.dataset.node) { ui(id).node = t.dataset.node; render(true); }
-  else if (t.dataset.sel) { const st = ui(id); st.sel = st.sel === t.dataset.sel ? null : t.dataset.sel; render(true); const d = $("#detail"); if (d && st.sel && d.getBoundingClientRect().top > innerHeight - 140) d.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+  else if (false) {}
   else if (t.id === "saveBtn") saveFile();
   else if (t.id === "copyBtn") copyAnswers();
 });
