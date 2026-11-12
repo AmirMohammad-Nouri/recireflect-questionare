@@ -56,7 +56,7 @@ p { margin: 0 }
 .rail-txt { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums }
 main { max-width: 980px; margin: 0 auto; padding-block: 28px 120px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 22px }
 .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent) }
-.lead { color: var(--muted); max-width: 68ch }
+.lead { color: var(--fg); max-width: 68ch }
 .prose { display: flex; flex-direction: column; gap: 12px; max-width: 68ch }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow) }
 .pad { padding: 18px 20px }
@@ -155,7 +155,13 @@ main { max-width: 980px; margin: 0 auto; padding-block: 28px 120px; padding-left
 .graph .node.sel circle { stroke: var(--fg); stroke-width: 2.5 }
 /* questions */
 .q { display: flex; flex-direction: column; gap: 10px }
-.q-t { font-weight: 600 }
+.q-t { font-weight: 600; font-size: 17px; line-height: 1.4; color: var(--fg); display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap }
+.qn { flex: none; display: inline-grid; place-items: center; min-width: 28px; height: 24px; border-radius: 6px; background: var(--accent); color: var(--on-accent); font-size: 13px; font-weight: 700; padding: 0 6px }
+.task { background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0; padding: 14px 18px; display: flex; flex-direction: column; gap: 6px; color: var(--fg) }
+.task-k { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent) }
+.task-q { font-family: var(--display); font-size: clamp(18px, 2.4vw, 21px); font-weight: 600; line-height: 1.3; text-wrap: balance }
+.task-how { font-size: 14px }
+.answers-h { display: flex; flex-direction: column; gap: 2px }
 .req { color: var(--warn); font-weight: 600; font-size: 12px; margin-left: 6px }
 .likert { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px }
 .likert label, .choice label { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 1px solid var(--line); border-radius: 9px; padding: 10px 6px; background: var(--surface); cursor: pointer; text-align: center; font-size: 12.5px; min-height: 64px }
@@ -336,19 +342,19 @@ function graph(sel) {
 /* ---------- part 1: ten features ---------- */
 const P1 = [
   { id: "reason", name: "A reason for every dish", desc: "Each suggested dish says, in plain words, why it was suggested.", shot: "discover",
-    q: "This feature helps a user find out more about why each dish was suggested.",
+    q: "Does this feature help a user find out more about why each dish was suggested?",
     with: () => appNav("Discover", { assistant: false }) + DISHES.slice(0, 2).map((d) => card(d, { reason: true })).join(""),
     without: () => plainList(2), none: "The same dishes, with no reason given." },
   { id: "scores", name: "Value scores and a health grade", desc: "Each dish shows its healthiness, sustainability and convenience from 0 to 1, a health grade from A to E, and the overall score that orders the list.", shot: "discover",
-    q: "This feature helps a user find out more about how healthy, sustainable and convenient each dish is.",
+    q: "Does this feature help a user find out more about how healthy, sustainable and convenient each dish is?",
     with: () => appNav("Discover") + DISHES.map((d) => card(d, { scores: true })).join(""),
     without: () => appNav("Discover", { baseline: true }) + DISHES.map((d) => card(d)).join(""), none: "The same dishes, with no scores or grade." },
   { id: "breakdown", name: "How it's scored", desc: "One click opens the full calculation of a dish: each value, its weight, and its share of the final score, down to the nutrients.", shot: "score-breakdown",
-    q: "This feature helps a user find out more about how a dish's final score was calculated.", interactive: "Click “How it's scored” on the card.",
+    q: "Does this feature help a user find out more about how a dish's final score was calculated?", interactive: "Click “How it's scored” on the card.",
     with: (st) => appNav("Discover") + card(DISHES[0], { scores: true, reason: true, how: true, open: st.open }),
     without: () => plainList(1), none: "The dish, with no way to see how it was scored." },
   { id: "values", name: "Your values", desc: "Sliders where a person sets how much healthiness, sustainability and convenience should count. Taste keeps a fixed 25% share learned from their reactions.", shot: "values",
-    q: "This feature helps a user find out more about how their own priorities shape the list.", interactive: "Move the sliders.",
+    q: "Does this feature help a user find out more about how their own priorities shape the list?", interactive: "Move the sliders.",
     with: (st) => { const v = st.v || { h: 40, s: 30, t: 30 }; const sum = v.h + v.s + v.t || 1; const pc = (k) => Math.round((v[k] / sum) * 100);
       return appNav("Profile") + `<div class="panel pad sliders"><b>Your values</b><span class="meta">How much each value counts when dishes are ranked.</span>
       ${["h", "s", "t"].map((k) => `<div><label for="sl-${k}"><span><span class="sq" style="background:${C[k]}"></span>${CN[k]}</span><span>${pc(k)}%</span></label><input id="sl-${k}" type="range" min="0" max="100" value="${v[k]}" data-sl="${k}"></div>`).join("")}
@@ -357,22 +363,22 @@ const P1 = [
     without: () => appNav("Profile", { baseline: true }) + `<div class="panel pad"><b>Your profile</b><p class="meta" style="margin-top:6px">Allergies: peanuts · Diet: vegetarian</p>
       <div class="empty" style="margin-top:12px">No way to say what matters to you. Every list uses the same fixed balance.</div></div>`, none: "A profile with only allergies and diet." },
   { id: "ask", name: "Ask the assistant why", desc: "An assistant beside every page answers questions about the list. It shows each step it took, and its facts come from the ranking engine, not from guesswork.", shot: "chat-explain",
-    q: "This feature helps a user find out more about the reasons behind a recommendation.", interactive: "Ask “Why is #1 first?”.",
+    q: "Does this feature help a user find out more about the reasons behind a recommendation?", interactive: "Ask “Why is #1 first?”.",
     with: (st) => `<div class="split"><div>${appNav("Discover", { assistant: true })}${card(DISHES[0], { scores: true })}</div>${chat("why", st.asked ? "why" : "")}</div>`,
     without: () => plainList(1) + `<div class="screen-note">No assistant: the list cannot be questioned.</div>`, none: "The list, with no assistant to ask." },
   { id: "whatif", name: "Try a what-if", desc: "A person can ask how the list would change if their priorities shifted. It is only a preview: nothing is saved.", shot: "chat-what-if",
-    q: "This feature helps a user find out more about how the list would change if their priorities changed.", interactive: "Ask “What if I cared more about sustainability?”.",
+    q: "Does this feature help a user find out more about how the list would change if their priorities changed?", interactive: "Ask “What if I cared more about sustainability?”.",
     with: (st) => `<div class="split"><div>${appNav("Discover", { assistant: true })}${card(DISHES[0], { scores: true })}</div>${chat("whatif", st.asked ? "whatif" : "")}</div>`,
     without: () => plainList(1) + `<div class="screen-note">No preview: the only way to find out is to change the settings and look.</div>`, none: "The list, with no way to preview a change." },
   { id: "supervisor", name: "The supervisor asks first", desc: "When a person's choices drift away from the goal they saved, a supervisor notices and asks a question. It explains what it noticed and never changes the goal by itself.", shot: "supervisor",
-    q: "This feature helps a user find out more about how their choices compare with the goal they set.", interactive: "Pick an answer to see what it does.",
+    q: "Does this feature help a user find out more about how their choices compare with the goal they set?", interactive: "Pick an answer to see what it does.",
     with: (st) => `<div class="split"><div>${appNav("Discover", { assistant: true, badge: 1 })}${card(DISHES[0], { scores: true })}</div>
       <div class="qcard"><span class="tag">Question</span><b>When convenience and healthiness pull in different directions, which usually wins for you?</b><p>${esc(TRADE_TEXT)}</p>
       <div class="opts">${Object.keys(TRADE_EFFECT).map((o) => `<button type="button" data-opt="${esc(o)}" aria-pressed="${st.opt === o}">${esc(o)}</button>`).join("")}</div>
       ${st.opt ? `<div class="box">${esc(TRADE_EFFECT[st.opt])}</div>` : ""}</div></div>`,
     without: () => plainList(1) + `<div class="screen-note">No supervisor: the app keeps using the saved goal, even when the person's choices have moved away from it, and nobody says so.</div>`, none: "The list, with no supervisor." },
   { id: "proposal", name: "Goal changes as options", desc: "When the evidence is strong, the supervisor proposes new goals. Each option shows the top five dishes it would give. Nothing changes until the person picks one.", shot: "chat-options",
-    q: "This feature helps a user find out more about what a change of goal would do before they decide.", interactive: "Pick a goal, “Only today”, or “Keep my goal”.",
+    q: "Does this feature help a user find out more about what a change of goal would do before they decide?", interactive: "Pick a goal, “Only today”, or “Keep my goal”.",
     with: (st) => `<div class="split"><div>${appNav("Discover", { assistant: true, badge: 2 })}<div class="panel pad"><b>Your saved goal</b><div style="margin-top:8px">${wbar(st.pick != null && st.pick >= 0 ? PROPS[st.pick].w : { h: 40, s: 30, t: 30 })}</div>
       <p class="meta" style="margin-top:6px">${st.pick == null ? "Healthiness 40% · Sustainability 30% · Convenience 30%" : st.pick === -1 ? "Kept as it is." : st.pick === -2 ? "Used only for today's lists; the saved goal is unchanged." : "Saved as a new version; the earlier goal can be restored at any time."}</p></div></div>
       <div style="display:flex;flex-direction:column;gap:8px">${PROPS.map((p, i) => `<div class="prop ${st.pick === i ? "chosen" : ""}"><b>${esc(p.t)}</b><span class="meta">Top five averages barely change</span><ol>${p.list.map((x) => `<li>${esc(x)}</li>`).join("")}</ol>
@@ -380,7 +386,7 @@ const P1 = [
       <div class="opts"><button type="button" data-pick="-1" aria-pressed="${st.pick === -1}">Keep my goal</button></div></div></div>`,
     without: () => appNav("Profile", { baseline: true }) + `<div class="empty">No proposals. The goal changes only if the person edits it themselves, without seeing what it would do to the list.</div>`, none: "No proposals at all." },
   { id: "insights", name: "Insights: what you said and what you do", desc: "A page that puts the values a person chose next to what their actual choices show, with the evidence behind every number.", shot: "insights",
-    q: "This feature helps a user find out more about the difference between what they say and what they do.",
+    q: "Does this feature help a user find out more about the difference between what they say and what they do?",
     with: () => appNav("Insights") + `<div class="panel pad" style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><b style="font-family:var(--display);font-size:24px">47%</b><span>Preference match</span><span class="meta">how closely your choices follow the values you set</span></div>
       ${[["h", 40, 9], ["s", 30, 8], ["t", 30, 83]].map(([k, a, b]) => `<div style="display:flex;flex-direction:column;gap:4px"><b style="font-size:13px"><span class="sq" style="background:${C[k]}"></span>${CN[k]}</b>
         <div class="cmp-row"><span class="meta">You chose</span><div class="bar"><i class="hatch" style="width:${a}%"></i></div><span>${a}%</span></div>
@@ -389,7 +395,7 @@ const P1 = [
       <span class="meta">The supervisor asks a question when a gap reaches 10 points (after 3 events) and proposes a change at 15 points (after 6). Your saved goal only changes when you accept.</span></div>`,
     without: () => appNav("Discover", { baseline: true }) + `<div class="empty">No Insights page. The person cannot see how their choices compare with what they said.</div>`, none: "No Insights page." },
   { id: "graph", name: "Knowledge graph", desc: "A map of what the app has recorded about the person: their goal, diet and allergies, every reaction and reason, the lists they got, and the supervisor's questions. It is where the supervisor's evidence comes from.", shot: "knowledge-graph",
-    q: "This feature helps a user find out more about what the app has recorded about them and why.", interactive: "Click a node.",
+    q: "Does this feature help a user find out more about what the app has recorded about them and why?", interactive: "Click a node.",
     with: (st) => appNav("Profile") + graph(st.node || "you"),
     without: () => appNav("Profile", { baseline: true }) + `<div class="empty">No knowledge graph. What the app recorded, and what its suggestions are based on, stays hidden.</div>`, none: "No graph." },
 ];
@@ -414,13 +420,13 @@ const ui = (k) => (S.ui[k] = S.ui[k] || {});
 
 /* ---------- screens ---------- */
 function likert(name, val) {
-  const L = ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"];
+  const L = ["Not at all", "Slightly", "Somewhat", "Quite a lot", "Very much"];
   return `<div class="likert" role="radiogroup">${L.map((l, i) => `<label><input type="radio" name="${name}" value="${i + 1}" ${val === i + 1 ? "checked" : ""}><b>${i + 1}</b>${l}</label>`).join("")}</div>`;
 }
 function scrIntro() {
   return `<div class="prose"><span class="eyebrow">Study questionnaire</span><h1>How should a food recommender explain itself?</h1>
     <p class="lead">ReciReflect suggests recipes, shows why, and has an AI supervisor that speaks up when a person's choices drift away from the goal they set. We want your opinion on its features, and on how often the supervisor should speak up.</p></div>
-    <div class="facts"><div class="fact"><b>Part 1 · 10 features</b><span>Each one shown with and without the feature, side by side. You rate how much it helps.</span></div>
+    <div class="facts"><div class="fact"><b>Part 1 · 10 features</b><span>Each one shown with and without the feature, side by side. You say how much it helps people find out more.</span></div>
     <div class="fact"><b>Part 2 · 10 cases</b><span>A fictional person's 10 days with three versions of the supervisor. You pick the one you prefer.</span></div>
     <div class="fact"><b>About 25 minutes</b><span>You can go back at any time. Your answers stay in this browser until you finish.</span></div></div>
     <div class="panel pad prose"><h3>Anonymous</h3><p>We do not ask for your name, email, age or any other detail about you, and nothing is sent anywhere. At the end you save your answers as a file and send that file yourself to the person who gave you this link.</p>
@@ -433,15 +439,19 @@ function scrP1Intro() {
 }
 function scrFeature(f, idx) {
   const st = ui(f.id); const mode = st.mode || "with"; const a = S.p1[f.id] || {};
-  return `<div class="prose"><span class="eyebrow">Part 1 · Feature ${idx + 1} of 10</span><h2>${esc(f.name)}</h2><p class="lead">${esc(f.desc)}</p></div>
+  return `<div class="prose"><span class="eyebrow">Part 1 · Feature ${idx + 1} of 10</span><h2>${esc(f.name)}</h2></div>
+    <div class="task"><span class="task-k">The question</span><span class="task-q">${esc(f.q)}</span>
+      <span class="task-how">Compare the app <b>with</b> and <b>without</b> this feature below, then answer at the bottom of the page.</span></div>
+    <p class="lead"><b>What it is:</b> ${esc(f.desc)}</p>
     <section class="compare"><div class="compare-bar"><div class="seg" role="group" aria-label="Compare">
       <button type="button" data-mode="with" aria-pressed="${mode === "with"}">With this feature</button><button type="button" data-mode="without" aria-pressed="${mode === "without"}">Without it</button></div>
       <button class="linkbtn" type="button" data-shot="${f.shot}">See it in the app</button></div>
       <div class="screen" id="screen">${mode === "with" ? f.with(st) : f.without(st)}</div>
       <div class="meta">${mode === "with" ? esc(f.interactive || "This illustration uses the app's real content.") : esc(f.none)}</div></section>
     <section class="panel pad" style="display:flex;flex-direction:column;gap:18px">
-      <div class="q"><div class="q-t">${esc(f.q)}<span class="req">required</span></div>${likert("help", a.help)}</div>
-      <div class="q"><div class="q-t">Which version would you rather use?<span class="req">required</span></div>
+      <div class="answers-h"><h3>Your answers</h3><span class="meta">Both questions are required.</span></div>
+      <div class="q"><div class="q-t"><span class="qn">Q1</span><span>${esc(f.q)}</span></div>${likert("help", a.help)}</div>
+      <div class="q"><div class="q-t"><span class="qn">Q2</span><span>Which version would you rather use?</span></div>
         <div class="choice" role="radiogroup">${[["with", "With this feature"], ["without", "Without it"], ["none", "No preference"]].map(([v, l]) => `<label><input type="radio" name="prefer" value="${v}" ${a.prefer === v ? "checked" : ""}>${l}</label>`).join("")}</div></div>
     </section>`;
 }
@@ -490,15 +500,18 @@ function scrCase(it, idx) {
       <div class="opts">${(e.options || []).map((o) => `<button type="button" disabled aria-pressed="${o === e.answer}">${esc(o)}</button>`).join("")}</div>
       <div class="answer"><b>${esc(it.name)} answered:</b> ${esc(e.answer || "no answer")}${e.why ? ` · “${esc(e.why)}”` : ""}${e.felt ? `<div class="meta" style="margin-top:3px">${esc(it.name)} ${FELT[e.felt] || e.felt}.</div>` : ""}</div>`; }
   return `<div class="prose"><span class="eyebrow">Part 2 · Case ${idx + 1} of 10 · ${esc(SCN[it.scenario])}</span><h2>${esc(it.name)}</h2></div>
+    <div class="task"><span class="task-k">The question</span><span class="task-q">Which version of the supervisor, A, B or C, would you prefer if you were ${esc(it.name)}?</span>
+      <span class="task-how">Read about ${esc(it.name)} and the 10 days below. Click the <b>?</b> and <b>!</b> marks to see what each version said, then choose at the bottom of the page.</span></div>
     <section class="person"><div class="panel pad prose"><p>${esc(it.bio)}</p><p class="meta">${esc(it.scenario_text)}</p>
       ${notes.length ? `<ul class="story">${notes.map((d) => `<li><b>Day ${d.day}:</b> ${d.notes.map(esc).join(" ")}</li>`).join("")}</ul>` : ""}</div>
       <div class="panel pad wish"><b>Goal</b><div class="wish-row"><span class="meta">Told the app</span>${wbar(it.entered)}</div>
       <div class="wish-row"><span class="meta">${changes ? "Really wants, day 1" : "Really wants"}</span>${wbar(first)}</div>${changes ? `<div class="wish-row"><span class="meta">Really wants, day 10</span>${wbar(last)}</div>` : ""}
       <div class="legend" style="font-size:11.5px"><span><span class="sw" style="background:var(--h)"></span>Healthiness</span><span><span class="sw" style="background:var(--s)"></span>Sustainability</span><span><span class="sw" style="background:var(--t)"></span>Convenience</span></div></div></section>
     <section class="panel pad tl">${realRow}${rows}<div class="detail" id="detail">${detail}</div></section>
-    <section class="panel pad" style="display:flex;flex-direction:column;gap:14px"><div class="q"><div class="q-t">Which version of the supervisor would you prefer for ${esc(it.name)}?<span class="req">required</span></div>
+    <section class="panel pad" style="display:flex;flex-direction:column;gap:14px"><div class="answers-h"><h3>Your answer</h3></div>
+      <div class="q"><div class="q-t"><span class="qn">Q1</span><span>Which version of the supervisor would you prefer for ${esc(it.name)}?</span><span class="req">required</span></div>
       <div class="choice" role="radiogroup">${"ABC".split("").map((L) => `<label><input type="radio" name="choice" value="${L}" ${a.choice === L ? "checked" : ""}><b style="font-family:var(--display);font-size:17px">Version ${L}</b></label>`).join("")}</div></div>
-      <label class="q" for="why-${it.id}"><span class="q-t">Why? (optional)</span><textarea id="why-${it.id}" data-reason="${it.id}" maxlength="1000">${esc(a.reason || "")}</textarea></label></section>`;
+      <label class="q" for="why-${it.id}"><span class="q-t"><span class="qn">Q2</span><span>Why? (optional)</span></span><textarea id="why-${it.id}" data-reason="${it.id}" maxlength="1000">${esc(a.reason || "")}</textarea></label></section>`;
 }
 function result() {
   const p1 = P1.map((f) => ({ feature: f.id, name: f.name, helps_1_to_5: S.p1[f.id]?.help ?? null, prefers: S.p1[f.id]?.prefer ?? null }));
@@ -506,7 +519,7 @@ function result() {
     return { case: it.id, persona: it.persona, scenario: it.scenario, choice: a.choice ?? null, chosen_threshold: a.choice ? Number(order["ABC".indexOf(a.choice)]) : null,
       version_thresholds: { A: Number(order[0]), B: Number(order[1]), C: Number(order[2]) }, reason: a.reason || "" }; });
   return { questionnaire: "ReciReflect study questionnaire", version: VERSION, response_id: S.rid, completed_on: new Date().toISOString().slice(0, 10),
-    minutes_taken: Math.max(1, Math.round((Date.now() - S.started) / 60000)), likert_scale: "1 strongly disagree … 5 strongly agree",
+    minutes_taken: Math.max(1, Math.round((Date.now() - S.started) / 60000)), likert_scale: "1 not at all, 2 slightly, 3 somewhat, 4 quite a lot, 5 very much",
     thresholds: { low: 0.10, best_in_simulation: 0.15, high: 0.30 }, source_of_cases: P2.source,
     part1: p1, part1_comments: S.p1c, part2: p2, part2_comments: S.p2c, general_comments: S.gc };
 }
