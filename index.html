@@ -590,11 +590,6 @@ function scrCase(it, idx) {
     return `<article class="vcard"><header class="vhead"><h3>Version ${L}</h3><span class="meta">${v.count ? `spoke up ${v.count} time${v.count > 1 ? "s" : ""}` : "stayed silent"}</span></header>
       <div class="strip" aria-label="10 days">${v.cells}</div><div class="strip-days"><span>Day 1</span><span>Day 10</span></div>
       <div class="vsec"><span class="vk">What happened</span>${v.lines.map((x) => `<p>${x}</p>`).join("")}</div>
-      <div class="vsec out"><span class="vk">Outcome</span>
-        <div class="orow"><span>Times it spoke up</span><b>${v.count}${v.count ? `<small>${v.needless ? `${v.needless} when nothing needed fixing` : "all when something needed fixing"}</small>` : ""}</b></div>
-        <div class="orow"><span>Goal fits ${esc(n)} at the end?</span><b>${goalRow}</b></div>
-        <div class="orow"><span>How ${esc(n)} felt about it</span><b>${v.count ? `${v.felt.helpful} helpful · ${v.felt.neutral} neutral · ${v.felt.annoying} annoying` : "not interrupted"}</b></div></div>
-      ${v.count ? `<details class="msgs"><summary>Read every message (${v.count})</summary><ol>${v.all.map((e) => `<li><b>Day ${e.day}, ${esc(e.meal)}:</b> “${esc(e.title)}” <span class="meta">${esc(said(e, n))}${e.why ? ` · “${esc(e.why)}”` : ""}</span></li>`).join("")}</ol></details>` : ""}
     </article>`;
   }).join("");
   return `<div class="prose"><span class="eyebrow">Part 2 · Case ${idx + 1} of 10 · ${esc(SCN[it.scenario])}</span><h2>${esc(n)}</h2></div>
