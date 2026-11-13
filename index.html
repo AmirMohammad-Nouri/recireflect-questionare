@@ -603,13 +603,13 @@ function scrCase(it, idx) {
     <section class="panel pad" style="display:flex;flex-direction:column;gap:14px"><div class="answers-h"><h3>Your answer</h3></div>
       <div class="q"><div class="q-t"><span class="qn">Q1</span><span>Which version handled ${esc(n)}'s 10 days best?</span><span class="req">required</span></div>
       <div class="choice" role="radiogroup">${"ABC".split("").map((L) => `<label><input type="radio" name="choice" value="${L}" ${a.choice === L ? "checked" : ""}><b style="font-family:var(--display);font-size:17px">Version ${L}</b></label>`).join("")}</div></div>
-      <label class="q" for="why-${it.id}"><span class="q-t"><span class="qn">Q2</span><span>Why? (optional)</span></span><textarea id="why-${it.id}" data-reason="${it.id}" maxlength="1000">${esc(a.reason || "")}</textarea></label></section>`;
+    </section>`;
 }
 function result() {
   const p1 = P1.map((f) => ({ feature: f.id, name: f.name, helps_1_to_5: S.p1[f.id]?.help ?? null, prefers: S.p1[f.id]?.prefer ?? null }));
   const p2 = P2ITEMS.map((it) => { const a = S.p2[it.id] || {}; const order = a.order || [];
     return { case: it.id, persona: it.persona, scenario: it.scenario, choice: a.choice ?? null, chosen_threshold: a.choice ? Number(order["ABC".indexOf(a.choice)]) : null,
-      version_thresholds: { A: Number(order[0]), B: Number(order[1]), C: Number(order[2]) }, reason: a.reason || "" }; });
+      version_thresholds: { A: Number(order[0]), B: Number(order[1]), C: Number(order[2]) } }; });
   return { questionnaire: "ReciReflect study questionnaire", version: VERSION, response_id: S.rid, completed_on: new Date().toISOString().slice(0, 10),
     minutes_taken: Math.max(1, Math.round((Date.now() - S.started) / 60000)), likert_scale: "1 not at all, 2 slightly, 3 somewhat, 4 quite a lot, 5 very much",
     thresholds: { low: 0.10, best_in_simulation: 0.15, high: 0.30 }, source_of_cases: P2.source,
@@ -679,7 +679,6 @@ main.addEventListener("input", (ev) => {
   if (t.dataset.sl) { const st = ui(STEPS[S.step].slice(3)); st.v = st.v || { h: 40, s: 30, t: 30 }; st.v[t.dataset.sl] = +t.value;
     const f = P1.find((x) => x.id === "values"); const scr = $("#screen"); const focus = t.id; scr.innerHTML = f.with(st); const el = document.getElementById(focus); if (el) el.focus(); save(); }
   else if (t.dataset.text) { S[t.dataset.text] = t.value; save(); if (STEPS[S.step] === "finish") $("#jsonView").textContent = JSON.stringify(result(), null, 2); }
-  else if (t.dataset.reason) { (S.p2[t.dataset.reason] = S.p2[t.dataset.reason] || {}).reason = t.value; save(); }
 });
 
 /* ---------- screenshots ---------- */
