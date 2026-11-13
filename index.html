@@ -441,11 +441,11 @@ const P2ITEMS = P2.items.map((it, i) => ({ ...it, id: `case${i + 1}`, name: cap(
 
 /* ---------- state ---------- */
 let S = null;
-const fresh = () => ({ rid: randId(), started: Date.now(), step: 0, p1: {}, p1c: "", p2: {}, p2c: "", gc: "", ui: {} });
+const fresh = () => ({ rid: randId(), started: Date.now(), step: 0, p1: {}, p2: {}, ui: {} });
 function load() { try { const x = JSON.parse(localStorage.getItem(STORE) || "null"); if (x && x.rid) return x; } catch (e) {} return fresh(); }
 function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} }
 S = load();
-const STEPS = ["intro", "p1intro", ...P1.map((f) => "p1:" + f.id), "p1end", "p2intro", ...P2ITEMS.map((x) => "p2:" + x.id), "finish"];
+const STEPS = ["intro", "p1intro", ...P1.map((f) => "p1:" + f.id), "p2intro", ...P2ITEMS.map((x) => "p2:" + x.id), "finish"];
 
 function orderFor(id) { if (!S.p2[id]) S.p2[id] = {}; if (!S.p2[id].order) { S.p2[id].order = shuffle(P2.thresholds); save(); } return S.p2[id].order; }
 const ui = (k) => (S.ui[k] = S.ui[k] || {});
@@ -486,10 +486,6 @@ function scrFeature(f, idx) {
       <div class="q"><div class="q-t"><span class="qn">Q2</span><span>Which version would you rather use?</span></div>
         <div class="choice" role="radiogroup">${[["with", "With this feature"], ["without", "Without it"], ["none", "No preference"]].map(([v, l]) => `<label><input type="radio" name="prefer" value="${v}" ${a.prefer === v ? "checked" : ""}>${l}</label>`).join("")}</div></div>
     </section>`;
-}
-function scrP1End() {
-  return `<div class="prose"><span class="eyebrow">End of part 1</span><h2>Anything else about the features?</h2><p class="lead">Optional. For example, a feature you found confusing, or one you missed.</p></div>
-    <label class="q" for="p1c"><span class="q-t">Comments on part 1 (optional)</span><textarea id="p1c" data-text="p1c" maxlength="2000">${esc(S.p1c)}</textarea></label>`;
 }
 function scrP2Intro() {
   return `<div class="prose"><span class="eyebrow">Part 2 of 2</span><h2>When should the supervisor speak up?</h2>
@@ -613,13 +609,11 @@ function result() {
   return { questionnaire: "ReciReflect study questionnaire", version: VERSION, response_id: S.rid, completed_on: new Date().toISOString().slice(0, 10),
     minutes_taken: Math.max(1, Math.round((Date.now() - S.started) / 60000)), likert_scale: "1 not at all, 2 slightly, 3 somewhat, 4 quite a lot, 5 very much",
     thresholds: { low: 0.10, best_in_simulation: 0.15, high: 0.30 }, source_of_cases: P2.source,
-    part1: p1, part1_comments: S.p1c, part2: p2, part2_comments: S.p2c, general_comments: S.gc };
+    part1: p1, part2: p2 };
 }
 function scrFinish() {
-  return `<div class="prose"><span class="eyebrow">Almost done</span><h2>Save your answers</h2><p class="lead">Thank you. Add a last comment if you like, then save the file and send it to the person who gave you this link.</p></div>
-    <label class="q" for="p2c"><span class="q-t">Comments on part 2 (optional)</span><textarea id="p2c" data-text="p2c" maxlength="2000">${esc(S.p2c)}</textarea></label>
-    <label class="q" for="gc"><span class="q-t">Anything else? (optional)</span><textarea id="gc" data-text="gc" maxlength="2000">${esc(S.gc)}</textarea></label>
-    <section class="panel pad done"><div class="okline"><i>✓</i>All 30 required answers are complete.</div>
+  return `<div class="prose"><span class="eyebrow">Almost done</span><h2>Save your answers</h2><p class="lead">Thank you. Save the file and send it to the person who gave you this link.</p></div>
+    <section class="panel pad done"><div class="okline"><i>✓</i>All 30 answers are complete.</div>
       <div style="display:flex;flex-wrap:wrap;gap:10px"><button class="btn primary" type="button" id="saveBtn">Save as JSON</button><button class="btn" type="button" id="copyBtn">Copy answers</button></div>
       <p id="saveMsg" class="meta" role="status"></p>
       <p class="meta">File name: <span class="mono">recireflect-answers-${S.rid}.json</span>. If saving does not work on your device, use “Copy answers” and paste them into an email or message instead.</p>
@@ -634,7 +628,7 @@ function stepValid(name) {
 }
 function render(keepScroll) {
   const name = STEPS[S.step]; const m = $("#main"); let html = "";
-  if (name === "intro") html = scrIntro(); else if (name === "p1intro") html = scrP1Intro(); else if (name === "p1end") html = scrP1End();
+  if (name === "intro") html = scrIntro(); else if (name === "p1intro") html = scrP1Intro();
   else if (name === "p2intro") html = scrP2Intro(); else if (name === "finish") html = scrFinish();
   else if (name.startsWith("p1:")) { const i = P1.findIndex((f) => f.id === name.slice(3)); html = scrFeature(P1[i], i); }
   else { const i = P2ITEMS.findIndex((x) => x.id === name.slice(3)); html = scrCase(P2ITEMS[i], i); }
@@ -678,7 +672,6 @@ main.addEventListener("input", (ev) => {
   const t = ev.target;
   if (t.dataset.sl) { const st = ui(STEPS[S.step].slice(3)); st.v = st.v || { h: 40, s: 30, t: 30 }; st.v[t.dataset.sl] = +t.value;
     const f = P1.find((x) => x.id === "values"); const scr = $("#screen"); const focus = t.id; scr.innerHTML = f.with(st); const el = document.getElementById(focus); if (el) el.focus(); save(); }
-  else if (t.dataset.text) { S[t.dataset.text] = t.value; save(); if (STEPS[S.step] === "finish") $("#jsonView").textContent = JSON.stringify(result(), null, 2); }
 });
 
 /* ---------- screenshots ---------- */
