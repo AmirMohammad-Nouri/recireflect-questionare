@@ -445,6 +445,8 @@ const fresh = () => ({ rid: randId(), started: Date.now(), step: 0, p1: {}, p2: 
 function load() { try { const x = JSON.parse(localStorage.getItem(STORE) || "null"); if (x && x.rid) return x; } catch (e) {} return fresh(); }
 function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} }
 S = load();
+/* each participant: a random half of the features opens on "Without it", the other half on "With this feature" */
+if (!S.firstView) { const ids = shuffle(P1.map((f) => f.id)); S.firstView = Object.fromEntries(ids.map((id, i) => [id, i < ids.length / 2 ? "without" : "with"])); save(); }
 const STEPS = ["intro", "p1intro", ...P1.map((f) => "p1:" + f.id), "p2intro", ...P2ITEMS.map((x) => "p2:" + x.id), "finish"];
 
 function orderFor(id) { if (!S.p2[id]) S.p2[id] = {}; if (!S.p2[id].order) { S.p2[id].order = shuffle(P2.thresholds); save(); } return S.p2[id].order; }
@@ -466,11 +468,11 @@ function scrIntro() {
 }
 function scrP1Intro() {
   return `<div class="prose"><span class="eyebrow">Part 1 of 2</span><h2>Ten features</h2>
-    <p>Each page shows one feature of ReciReflect. Use the switch to compare the app <b>with</b> the feature and <b>without</b> it; most of the illustrations react when you click them. The button “See it in the app” shows a real screenshot.</p>
+    <p>Each page shows one feature of ReciReflect. Some pages open showing the app <b>with</b> the feature, others <b>without</b> it. Use the switch to see both; most of the illustrations react when you click them. The button “See it in the app” shows a real screenshot.</p>
     <p>Then answer two short questions. There are no right or wrong answers.</p></div>`;
 }
 function scrFeature(f, idx) {
-  const st = ui(f.id); const mode = st.mode || "with"; const a = S.p1[f.id] || {};
+  const st = ui(f.id); const mode = st.mode || S.firstView[f.id] || "with"; const a = S.p1[f.id] || {};
   return `<div class="prose"><span class="eyebrow">Part 1 · Feature ${idx + 1} of 10</span><h2>${esc(f.name)}</h2></div>
     <p class="what"><span class="what-k">What it is</span><span>${esc(f.desc)}</span></p>
     <div class="task"><span class="task-k">The question</span><span class="task-q">${esc(f.q)}</span>
@@ -602,7 +604,7 @@ function scrCase(it, idx) {
     </section>`;
 }
 function result() {
-  const p1 = P1.map((f) => ({ feature: f.id, name: f.name, helps_1_to_5: S.p1[f.id]?.help ?? null, prefers: S.p1[f.id]?.prefer ?? null }));
+  const p1 = P1.map((f) => ({ feature: f.id, name: f.name, helps_1_to_5: S.p1[f.id]?.help ?? null, prefers: S.p1[f.id]?.prefer ?? null, first_view: S.firstView[f.id] }));
   const p2 = P2ITEMS.map((it) => { const a = S.p2[it.id] || {}; const order = a.order || [];
     return { case: it.id, persona: it.persona, scenario: it.scenario, choice: a.choice ?? null, chosen_threshold: a.choice ? Number(order["ABC".indexOf(a.choice)]) : null,
       version_thresholds: { A: Number(order[0]), B: Number(order[1]), C: Number(order[2]) } }; });
